@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Michelle's Futoshiki</title>
+  <style>
+    :root {
+      --bg-1: #0f1226;
+      --bg-2: #171b38;
+      --panel: rgba(255,255,255,0.08);
+      --panel-2: rgba(255,255,255,0.06);
+      --line: rgba(255,255,255,0.14);
+      --text: #eef2ff;
+      --muted: #a9b3d9;
+      --accent: #c26b2a;
+      --accent-2: #6ec1d9;
+      --good: #4caf50;
+      --warn: #d97706;
+      --bad: #d14343;
+      --shadow: 0 18px 60px rgba(0,0,0,0.35);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(194,107,42,0.22), transparent 32%),
+        radial-gradient(circle at top right, rgba(110,193,217,0.14), transparent 26%),
+        linear-gradient(135deg, #12151d, #1c2331 48%, #0f1117);
+      overflow-x: hidden;
+    }
+
+    .shell {
+      width: min(1500px, calc(100% - 24px));
+      margin: 12px auto 24px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .hero {
+      position: relative;
+      padding: 22px;
+      border-radius: 28px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)),
+        linear-gradient(135deg, rgba(63,38,27,0.32), rgba(18,24,36,0.4));
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: auto -8% -42% auto;
+      width: 360px;
+      height: 360px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(110,193,217,0.16), transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent 0,
+        transparent 54px,
+        rgba(255,255,255,0.015) 54px,
+        rgba(255,255,255,0.015) 56px
+      );
+      opacity: 0.35;
+      pointer-events: none;
+      mix-blend-mode: screen;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(32px, 5vw, 56px);
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+    }
+
+    .sub {
+      margin: 0;
+      max-width: 920px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.55;
+    }
+
+    .controls {
+      display: block;
+      margin-top: 18px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-top {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-copy {
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      overflow: hidden;
+    }
+
+    .panel-inner {
+      padding: 16px;
+    }
+
+    .grid2 {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: 1.1fr 0.9fr;
+    }
+
+    .grid4 {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin-top: 10px;
+    }
+
+    .field label, .section-title {
+      display: block;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #c5d0f7;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    input[type="text"], select {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      background: rgba(10,14,33,0.72);
+      color: var(--text);
+      padding: 9px 11px;
+      font-size: 13px;
+      outline: none;
+      transition: 0.2s ease;
+    }
+
+    input[type="text"]:focus, select:focus {
+      border-color: rgba(139,92,246,0.8);
+      box-shadow: 0 0 0 4px rgba(139,92,246,0.18);
+    }
+
+    .preset-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      color: white;
+      background: linear-gradient(135deg, var(--accent), #6d28d9);
+      transition: transform 0.14s ease, opacity 0.14s ease, box-shadow 0.14s ease;
+      box-shadow: 0 10px 28px rgba(109,40,217,0.28);
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(1px); }
+    button.secondary {
+      background: rgba(255,255,255,0.08);
+      box-shadow: none;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text);
+    }
+    button.good {
+      background: linear-gradient(135deg, #16a34a, #15803d);
+      box-shadow: 0 10px 28px rgba(21,128,61,0.24);
+    }
+    button.warn {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      box-shadow: 0 10px 28px rgba(217,119,6,0.24);
+    }
+
+    .toggle-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 11px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.10);
+      color: var(--text);
+      font-size: 14px;
+      user-select: none;
+    }
+
+    .toggle input { accent-color: var(--accent-2); }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .stat {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .stat .k {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.11em;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .stat .v {
+      font-size: clamp(20px, 2.5vw, 32px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .board-panel {
+      padding: 0;
+    }
+
+    .board-top {
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0));
+    }
+
+    .status {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .status strong { color: var(--text); }
+
+    .board-wrap {
+      padding: 18px;
+      overflow: auto;
+      max-height: calc(100vh - 300px);
+      min-height: 420px;
+      position: relative;
+    }
+
+    .board {
+      display: grid;
+      gap: 4px;
+      width: max-content;
+      min-width: 100%;
+      align-content: start;
+      justify-content: start;
+    }
+
+    .cell, .ineq {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+    }
+
+    .cell {
+      position: relative;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.10);
+      overflow: hidden;
+    }
+
+    .cell input {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: transparent;
+      color: var(--text);
+      text-align: center;
+      font-weight: 800;
+      outline: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .cell.given {
+      background: linear-gradient(180deg, rgba(34,211,238,0.14), rgba(34,211,238,0.08));
+      border-color: rgba(34,211,238,0.28);
+    }
+
+    .cell.given input {
+      color: #d9fbff;
+    }
+
+    .cell.selected {
+      box-shadow: inset 0 0 0 2px rgba(139,92,246,0.95), 0 0 0 3px rgba(139,92,246,0.16);
+      z-index: 2;
+    }
+
+    .cell.ok {
+      box-shadow: inset 0 0 0 2px rgba(34,197,94,0.8);
+    }
+
+    .cell.bad {
+      box-shadow: inset 0 0 0 2px rgba(239,68,68,0.9);
+      background: rgba(127,29,29,0.30);
+    }
+
+    .ineq {
+      color: #d6dcff;
+      font-weight: 900;
+      font-family: ui-rounded, system-ui, sans-serif;
+      opacity: 0.9;
+      background: rgba(255,255,255,0.025);
+    }
+
+    .empty-gap {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .foot {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .chipline {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .chip {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.10);
+      color: var(--text);
+      font-size: 12px;
+    }
+
+    @media (max-width: 1100px) {
+      .hero-top { flex-direction: column; align-items: start; }
+      .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 720px) {
+      .shell { width: min(100%, calc(100% - 12px)); margin: 6px auto 16px; }
+      .hero { padding: 20px; border-radius: 20px; }
+      .panel-inner, .board-top, .board-wrap { padding: 14px; }
+      .grid2, .grid4 { grid-template-columns: 1fr; }
+      .board-wrap { min-height: 360px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <div class="hero-top">
+        <div class="hero-copy">
+          <h1>Michelle's Futoshiki</h1>
+          <p class="sub">
+            A rain-soaked Manchester twist on Futoshiki - moody, sharp, and built for endless puzzle nights. Dial up the board size, spin up a fresh game, and let the grid do the talking.
+          </p>
+        </div>
+      </div>
+
+      <section class="controls">
+        <div class="panel">
+          <div class="panel-inner">
+            <div class="grid2">
+              <div class="field">
+                <label for="sizeInput">Board size</label>
+                <input id="sizeInput" type="text" value="6" placeholder="Type any size like 6, 9, 12, 25, 50" />
+                <div class="preset-row">
+                  <button class="secondary preset" data-size="4">4x4</button>
+                  <button class="secondary preset" data-size="6">6x6</button>
+                  <button class="secondary preset" data-size="9">9x9</button>
+                  <button class="secondary preset" data-size="12">12x12</button>
+                  <button class="secondary preset" data-size="16">16x16</button>
+                  <button class="secondary preset" data-size="25">25x25</button>
+                  <button class="secondary preset" data-size="50">50x50</button>
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="difficulty">Difficulty</label>
+                <select id="difficulty">
+                  <option value="easy">Easy</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="hard">Hard</option>
+                  <option value="chaos">Chaos</option>
+                </select>
+
+                <div class="toggle-row">
+                  <label class="toggle"><input id="liveCheck" type="checkbox" checked /> Live check</label>
+                  <label class="toggle"><input id="showNotes" type="checkbox" checked /> Large-board note</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid4">
+              <button id="newGameBtn">Generate new game</button>
+              <button id="checkBtn" class="good">Check board</button>
+              <button id="clearBtn" class="secondary">Clear guesses</button>
+              <button id="solveBtn" class="warn">Show solution</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <section class="panel board-panel">
+      <div class="board-top">
+        <div>
+          <div class="section-title" style="margin:0 0 5px;">Puzzle board</div>
+          <div class="status" id="status"><strong>Ready.</strong> Generate a puzzle and start typing numbers.</div>
+          <p class="foot" id="boardNote" style="margin:8px 0 0;">Bigger boards stay fast by generating from valid Latin-square patterns and then layering in inequality clues. On huge sizes, the focus is smooth gameplay and endless variety, not strict uniqueness proofs.</p>
+        </div>
+      </div>
+      <div class="board-wrap">
+        <div id="board" class="board"></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const state = {
+      size: 6,
+      difficulty: 'medium',
+      solution: [],
+      puzzle: [],
+      horiz: [],
+      vert: [],
+      inputs: [],
+      cellSize: 52,
+      solvingShown: false,
+    };
+
+    const els = {
+      board: document.getElementById('board'),
+      sizeInput: document.getElementById('sizeInput'),
+      difficulty: document.getElementById('difficulty'),
+      status: document.getElementById('status'),
+      liveCheck: document.getElementById('liveCheck'),
+      showNotes: document.getElementById('showNotes'),
+      boardNote: document.getElementById('boardNote'),
+      newGameBtn: document.getElementById('newGameBtn'),
+      checkBtn: document.getElementById('checkBtn'),
+      clearBtn: document.getElementById('clearBtn'),
+      solveBtn: document.getElementById('solveBtn'),
+    };
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function clamp(n, min, max) {
+      return Math.max(min, Math.min(max, n));
+    }
+
+    function parseSize(raw) {
+      const n = Number(String(raw).trim());
+      if (!Number.isInteger(n)) return null;
+      return clamp(n, 3, 70);
+    }
+
+    function setStatus(html) {
+      els.status.innerHTML = html;
+    }
+
+    function buildLatinSquare(n) {
+      const base = Array.from({ length: n }, (_, r) =>
+        Array.from({ length: n }, (_, c) => ((r + c) % n) + 1)
+      );
+
+      const rowPerm = shuffle(Array.from({ length: n }, (_, i) => i));
+      const colPerm = shuffle(Array.from({ length: n }, (_, i) => i));
+      const symPerm = shuffle(Array.from({ length: n }, (_, i) => i + 1));
+
+      const out = Array.from({ length: n }, () => Array(n).fill(0));
+      for (let r = 0; r < n; r++) {
+        for (let c = 0; c < n; c++) {
+          const val = base[rowPerm[r]][colPerm[c]];
+          out[r][c] = symPerm[val - 1];
+        }
+      }
+      return out;
+    }
+
+    function generatePuzzle(n, difficulty) {
+      const solution = buildLatinSquare(n);
+      const puzzle = Array.from({ length: n }, () => Array(n).fill(null));
+      const horiz = Array.from({ length: n }, () => Array(n - 1).fill(''));
+      const vert = Array.from({ length: n - 1 }, () => Array(n).fill(''));
+
+      const clueRates = {
+        easy: 0.38,
+        medium: 0.24,
+        hard: 0.15,
+        chaos: 0.08,
+      };
+
+      const ineqRates = {
+        easy: 0.56,
+        medium: 0.42,
+        hard: 0.30,
+        chaos: 0.22,
+      };
+
+      const clueRate = clueRates[difficulty] ?? 0.24;
+      const ineqRate = ineqRates[difficulty] ?? 0.42;
+
+      const total = n * n;
+      const minClues = n <= 6 ? n : Math.ceil(n * 0.7);
+      let cluesNeeded = Math.max(minClues, Math.round(total * clueRate));
+      if (n >= 25) cluesNeeded = Math.max(minClues, Math.round(total * (clueRate * 0.72)));
+      if (n >= 50) cluesNeeded = Math.max(minClues, Math.round(total * (clueRate * 0.56)));
+
+      const coords = shuffle(Array.from({ length: total }, (_, i) => [Math.floor(i / n), i % n]));
+      for (let i = 0; i < cluesNeeded && i < coords.length; i++) {
+        const [r, c] = coords[i];
+        puzzle[r][c] = solution[r][c];
+      }
+
+      const horizEdges = [];
+      const vertEdges = [];
+      for (let r = 0; r < n; r++) {
+        for (let c = 0; c < n - 1; c++) horizEdges.push([r, c]);
+      }
+      for (let r = 0; r < n - 1; r++) {
+        for (let c = 0; c < n; c++) vertEdges.push([r, c]);
+      }
+
+      const hCount = Math.round(horizEdges.length * ineqRate);
+      const vCount = Math.round(vertEdges.length * ineqRate);
+
+      shuffle(horizEdges).slice(0, hCount).forEach(([r, c]) => {
+        horiz[r][c] = solution[r][c] < solution[r][c + 1] ? '<' : '>';
+      });
+      shuffle(vertEdges).slice(0, vCount).forEach(([r, c]) => {
+        vert[r][c] = solution[r][c] < solution[r + 1][c] ? '˄' : '˅';
+      });
+
+      return { solution, puzzle, horiz, vert };
+    }
+
+    function calcCellSize(n) {
+      if (n <= 6) return 56;
+      if (n <= 9) return 48;
+      if (n <= 12) return 42;
+      if (n <= 16) return 36;
+      if (n <= 25) return 28;
+      if (n <= 40) return 22;
+      return 18;
+    }
+
+    function fontSizeFor(n) {
+      if (n <= 6) return 24;
+      if (n <= 12) return 18;
+      if (n <= 25) return 14;
+      if (n <= 40) return 12;
+      return 11;
+    }
+
+    function hintFontSizeFor(n) {
+      if (n <= 12) return 20;
+      if (n <= 25) return 15;
+      if (n <= 40) return 12;
+      return 10;
+    }
+
+    function renderBoard() {
+      const n = state.size;
+      state.inputs = Array.from({ length: n }, () => Array(n).fill(null));
+      const cellSize = calcCellSize(n);
+      state.cellSize = cellSize;
+      const gapSize = Math.max(10, Math.round(cellSize * 0.34));
+      const frag = document.createDocumentFragment();
+      els.board.innerHTML = '';
+      els.board.style.gridTemplateColumns = `repeat(${n * 2 - 1}, max-content)`;
+
+      for (let rr = 0; rr < n * 2 - 1; rr++) {
+        for (let cc = 0; cc < n * 2 - 1; cc++) {
+          const piece = document.createElement('div');
+
+          const isCell = rr % 2 === 0 && cc % 2 === 0;
+          const isHoriz = rr % 2 === 0 && cc % 2 === 1;
+          const isVert = rr % 2 === 1 && cc % 2 === 0;
+
+          if (isCell) {
+            const r = rr / 2;
+            const c = cc / 2;
+            piece.className = 'cell';
+            piece.style.width = `${cellSize}px`;
+            piece.style.height = `${cellSize}px`;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.inputMode = 'numeric';
+            input.maxLength = String(state.size).length + 1;
+            input.style.fontSize = `${fontSizeFor(n)}px`;
+            input.dataset.r = r;
+            input.dataset.c = c;
+
+            const val = state.puzzle[r][c];
+            if (val != null) {
+              input.value = val;
+              input.disabled = true;
+              piece.classList.add('given');
+            }
+
+            input.addEventListener('focus', () => piece.classList.add('selected'));
+            input.addEventListener('blur', () => piece.classList.remove('selected'));
+            input.addEventListener('input', onCellInput);
+            input.addEventListener('keydown', onCellKeydown);
+            piece.appendChild(input);
+            frag.appendChild(piece);
+            state.inputs[r][c] = input;
+          } else if (isHoriz) {
+            const r = rr / 2;
+            const c = (cc - 1) / 2;
+            piece.className = 'ineq';
+            piece.style.width = `${gapSize}px`;
+            piece.style.height = `${cellSize}px`;
+            piece.style.fontSize = `${hintFontSizeFor(n)}px`;
+            piece.textContent = state.horiz[r][c] || '';
+            if (!state.horiz[r][c]) piece.classList.add('empty-gap');
+            frag.appendChild(piece);
+          } else if (isVert) {
+            const r = (rr - 1) / 2;
+            const c = cc / 2;
+            piece.className = 'ineq';
+            piece.style.width = `${cellSize}px`;
+            piece.style.height = `${gapSize}px`;
+            piece.style.fontSize = `${hintFontSizeFor(n)}px`;
+            piece.textContent = state.vert[r][c] || '';
+            if (!state.vert[r][c]) piece.classList.add('empty-gap');
+            frag.appendChild(piece);
+          } else {
+            piece.className = 'ineq empty-gap';
+            piece.style.width = `${gapSize}px`;
+            piece.style.height = `${gapSize}px`;
+            frag.appendChild(piece);
+          }
+        }
+      }
+
+      els.board.appendChild(frag);
+      updateStats();
+    }
+
+    function moveFocus(r, c) {
+      if (r < 0 || c < 0 || r >= state.size || c >= state.size) return;
+      const input = state.inputs[r]?.[c];
+      if (input && !input.disabled) input.focus();
+    }
+
+    function onCellKeydown(e) {
+      const r = Number(e.target.dataset.r);
+      const c = Number(e.target.dataset.c);
+      if (e.key === 'ArrowRight') { e.preventDefault(); moveFocus(r, c + 1); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); moveFocus(r, c - 1); }
+      if (e.key === 'ArrowDown') { e.preventDefault(); moveFocus(r + 1, c); }
+      if (e.key === 'ArrowUp') { e.preventDefault(); moveFocus(r - 1, c); }
+    }
+
+    function sanitiseValue(value) {
+      const clean = value.replace(/[^0-9]/g, '');
+      if (!clean) return '';
+      const num = Number(clean);
+      if (!Number.isInteger(num) || num < 1 || num > state.size) return '';
+      return String(num);
+    }
+
+    function onCellInput(e) {
+      const input = e.target;
+      input.value = sanitiseValue(input.value);
+      if (els.liveCheck.checked) {
+        validateBoard(true);
+      } else {
+        clearValidationStyles();
+      }
+      updateStats();
+      maybeCelebrate();
+    }
+
+    function clearValidationStyles() {
+      document.querySelectorAll('.cell.bad, .cell.ok').forEach(cell => cell.classList.remove('bad', 'ok'));
+    }
+
+    function getUserGrid() {
+      return state.inputs.map((row, r) => row.map((input, c) => {
+        if (state.puzzle[r][c] != null) return state.puzzle[r][c];
+        return input.value ? Number(input.value) : null;
+      }));
+    }
+
+    function validateBoard(mark = false) {
+      const n = state.size;
+      const grid = getUserGrid();
+      const bad = new Set();
+      const ok = new Set();
+
+      for (let r = 0; r < n; r++) {
+        const seen = new Map();
+        for (let c = 0; c < n; c++) {
+          const v = grid[r][c];
+          if (v == null) continue;
+          if (!seen.has(v)) seen.set(v, []);
+          seen.get(v).push([r, c]);
+        }
+        seen.forEach(coords => {
+          if (coords.length > 1) coords.forEach(([r, c]) => bad.add(`${r},${c}`));
+        });
+      }
+
+      for (let c = 0; c < n; c++) {
+        const seen = new Map();
+        for (let r = 0; r < n; r++) {
+          const v = grid[r][c];
+          if (v == null) continue;
+          if (!seen.has(v)) seen.set(v, []);
+          seen.get(v).push([r, c]);
+        }
+        seen.forEach(coords => {
+          if (coords.length > 1) coords.forEach(([r, c]) => bad.add(`${r},${c}`));
+        });
+      }
+
+      for (let r = 0; r < n; r++) {
+        for (let c = 0; c < n - 1; c++) {
+          const sign = state.horiz[r][c];
+          if (!sign) continue;
+          const a = grid[r][c];
+          const b = grid[r][c + 1];
+          if (a == null || b == null) continue;
+          if ((sign === '<' && !(a < b)) || (sign === '>' && !(a > b))) {
+            bad.add(`${r},${c}`); bad.add(`${r},${c+1}`);
+          }
+        }
+      }
+
+      for (let r = 0; r < n - 1; r++) {
+        for (let c = 0; c < n; c++) {
+          const sign = state.vert[r][c];
+          if (!sign) continue;
+          const a = grid[r][c];
+          const b = grid[r + 1][c];
+          if (a == null || b == null) continue;
+          if ((sign === '˄' && !(a < b)) || (sign === '˅' && !(a > b))) {
+            bad.add(`${r},${c}`); bad.add(`${r+1},${c}`);
+          }
+        }
+      }
+
+      let complete = true;
+      for (let r = 0; r < n; r++) {
+        for (let c = 0; c < n; c++) {
+          if (grid[r][c] == null) complete = false;
+          const key = `${r},${c}`;
+          if (grid[r][c] != null && grid[r][c] === state.solution[r][c] && !bad.has(key)) ok.add(key);
+        }
+      }
+
+      if (mark) {
+        clearValidationStyles();
+        for (let r = 0; r < n; r++) {
+          for (let c = 0; c < n; c++) {
+            const input = state.inputs[r][c];
+            const cell = input.parentElement;
+            const key = `${r},${c}`;
+            if (bad.has(key) && !input.disabled) cell.classList.add('bad');
+            else if (ok.has(key) && !input.disabled && input.value) cell.classList.add('ok');
+          }
+        }
+      }
+
+      return { badCount: bad.size, complete, solved: complete && bad.size === 0 && isSolvedExactly(grid) };
+    }
+
+    function isSolvedExactly(grid) {
+      for (let r = 0; r < state.size; r++) {
+        for (let c = 0; c < state.size; c++) {
+          if (grid[r][c] !== state.solution[r][c]) return false;
+        }
+      }
+      return true;
+    }
+
+    function updateStats() {
+      const n = state.size;
+      let clues = 0;
+      let filled = 0;
+      let ineq = 0;
+      for (let r = 0; r < n; r++) {
+        for (let c = 0; c < n; c++) {
+          if (state.puzzle[r][c] != null) clues++;
+          const input = state.inputs[r]?.[c];
+          if ((state.puzzle[r][c] != null) || (input && input.value)) filled++;
+        }
+      }
+      for (let r = 0; r < n; r++) for (let c = 0; c < n - 1; c++) if (state.horiz[r][c]) ineq++;
+      for (let r = 0; r < n - 1; r++) for (let c = 0; c < n; c++) if (state.vert[r][c]) ineq++;
+
+      els.boardNote.style.display = els.showNotes.checked ? 'block' : 'none';
+    }
+
+    function clearGuesses() {
+      for (let r = 0; r < state.size; r++) {
+        for (let c = 0; c < state.size; c++) {
+          const input = state.inputs[r][c];
+          if (!input.disabled) input.value = '';
+        }
+      }
+      clearValidationStyles();
+      updateStats();
+      state.solvingShown = false;
+      setStatus('<strong>Cleared.</strong> All guesses removed.');
+    }
+
+    function showSolution() {
+      for (let r = 0; r < state.size; r++) {
+        for (let c = 0; c < state.size; c++) {
+          const input = state.inputs[r][c];
+          if (!input.disabled) input.value = state.solution[r][c];
+        }
+      }
+      validateBoard(true);
+      updateStats();
+      state.solvingShown = true;
+      setStatus('<strong>Solution shown.</strong> Board filled with the generated answer.');
+    }
+
+    function maybeCelebrate() {
+      const result = validateBoard(els.liveCheck.checked);
+      if (result.solved) {
+        setStatus('<strong>Solved.</strong> Nice work. Generate another one and keep going.');
+      }
+    }
+
+    function startNewGame() {
+      const parsed = parseSize(els.sizeInput.value);
+      if (!parsed) {
+        setStatus('<strong>Invalid size.</strong> Type a whole number between 3 and 70.');
+        return;
+      }
+      state.size = parsed;
+      state.difficulty = els.difficulty.value;
+      const { solution, puzzle, horiz, vert } = generatePuzzle(state.size, state.difficulty);
+      state.solution = solution;
+      state.puzzle = puzzle;
+      state.horiz = horiz;
+      state.vert = vert;
+      state.solvingShown = false;
+      renderBoard();
+      const speedNote = state.size >= 40 ? ' Large board mode is active.' : '';
+      setStatus(`<strong>New game ready.</strong> ${state.size}x${state.size} ${state.difficulty} puzzle generated.${speedNote}`);
+    }
+
+    els.newGameBtn.addEventListener('click', startNewGame);
+    els.checkBtn.addEventListener('click', () => {
+      const result = validateBoard(true);
+      updateStats();
+      if (result.solved) {
+        setStatus('<strong>Solved.</strong> Everything checks out.');
+      } else if (result.badCount > 0) {
+        setStatus(`<strong>Not yet.</strong> ${result.badCount} cell${result.badCount === 1 ? '' : 's'} currently break the rules.`);
+      } else {
+        setStatus('<strong>Looking good so far.</strong> No visible rule breaks in the filled cells.');
+      }
+    });
+    els.clearBtn.addEventListener('click', clearGuesses);
+    els.solveBtn.addEventListener('click', showSolution);
+    els.showNotes.addEventListener('change', updateStats);
+    els.difficulty.addEventListener('change', () => state.difficulty = els.difficulty.value);
+    els.sizeInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') startNewGame();
+    });
+
+    document.querySelectorAll('.preset').forEach(btn => {
+      btn.addEventListener('click', () => {
+        els.sizeInput.value = btn.dataset.size;
+        startNewGame();
+      });
+    });
+
+    startNewGame();
+  </script>
+</body>
+</html>

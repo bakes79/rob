@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recipe Card Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── RESET ──────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --cream:      #FBF7F0;
+  --parchment:  #F2EAD8;
+  --terracotta: #B5613A;
+  --mocha:      #5C3D2E;
+  --warm-brown: #8B5E3C;
+  --sage:       #8A9A7B;
+  --gold:       #C9A96E;
+  --dark-text:  #3A2E26;
+  --light-line: #E2D5C0;
+  --alt-bg:     #F5EDD8;
+  --deco-right: #E8D9C5;
+  --deco-left:  #EFE4D2;
+}
+
+/* ── SCREEN CHROME ──────────────────────────────────── */
+body {
+  font-family: 'Poppins', sans-serif;
+  background: #1a1210;
+  color: var(--dark-text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  background: var(--mocha);
+  color: var(--cream);
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+}
+.app-header h1 { font-family:'Lora',serif; font-size:17px; font-style:italic; color:var(--gold); }
+.app-header .tagline { font-size:10px; color:var(--light-line); font-weight:300; margin-top:1px; }
+.header-actions { display:flex; gap:10px; align-items:center; }
+.btn {
+  padding:7px 16px; border:none; border-radius:20px;
+  font-family:'Poppins',sans-serif; font-size:11px; font-weight:600;
+  cursor:pointer; transition:all .2s; letter-spacing:.05em; text-transform:uppercase;
+}
+.btn-gold { background:var(--gold); color:var(--mocha); }
+.btn-gold:hover { background:#d4b47a; transform:translateY(-1px); }
+.btn-outline { background:transparent; color:var(--gold); border:1.5px solid var(--gold); }
+.btn-outline:hover { background:rgba(201,169,110,.1); }
+
+.workspace {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  flex: 1;
+  overflow: hidden;
+  height: calc(100vh - 52px);
+}
+
+/* ── EDITOR PANEL ───────────────────────────────────── */
+.editor-panel {
+  background: #261a14;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-right: 1px solid #3a2518;
+}
+.section-label {
+  font-size:9px; font-weight:700; letter-spacing:.15em; text-transform:uppercase;
+  color:var(--gold); margin-bottom:6px; display:flex; align-items:center; gap:8px;
+}
+.section-label::after { content:''; flex:1; height:1px; background:#3a2518; }
+.editor-card {
+  background:#1f1510; border:1px solid #3a2518; border-radius:7px; padding:12px;
+}
+label {
+  display:block; font-size:9px; font-weight:600; color:#a88060;
+  letter-spacing:.08em; text-transform:uppercase; margin-bottom:3px; margin-top:8px;
+}
+label:first-child { margin-top:0; }
+input[type="text"], textarea {
+  width:100%; background:#2a1c14; border:1px solid #4a3020; border-radius:4px;
+  color:var(--cream); font-family:'Poppins',sans-serif; font-size:11px;
+  padding:6px 9px; outline:none; transition:border-color .2s;
+}
+input[type="text"]:focus, textarea:focus { border-color:var(--gold); }
+textarea { resize:vertical; min-height:52px; line-height:1.5; }
+.list-editor { display:flex; flex-direction:column; gap:4px; }
+.list-item-row { display:flex; gap:5px; align-items:flex-start; flex-wrap:wrap; }
+.btn-remove {
+  background:#4a1a1a; color:#ff7070; border:none; border-radius:4px;
+  width:22px; height:22px; font-size:14px; cursor:pointer; flex-shrink:0;
+  margin-top:3px; transition:background .2s; display:flex; align-items:center; justify-content:center;
+}
+.btn-remove:hover { background:#6a2020; }
+.btn-add {
+  background:#1a3020; color:#70c070; border:1px dashed #2a5030; border-radius:4px;
+  padding:4px; font-size:10px; cursor:pointer; width:100%; transition:all .2s;
+  font-family:'Poppins',sans-serif; margin-top:3px;
+}
+.btn-add:hover { background:#1e3824; border-color:#3a7040; }
+
+/* ── PREVIEW PANEL ──────────────────────────────────── */
+.preview-panel {
+  background: #2a1e18;
+  overflow: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 28px 20px;
+}
+
+/* ── RECIPE CARD — fixed A4 pixel size ──────────────── */
+.card {
+  width: 794px;
+  height: 1123px;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  font-family: 'Poppins', sans-serif;
+  background: var(--cream);
+  box-shadow: 0 8px 40px rgba(0,0,0,.6);
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+/* Layer 1: cream background is the card itself */
+
+/* Layer 2: parchment header band */
+.card-header-band {
+  position:absolute; top:0; left:0; right:0; height:190px;
+  background:var(--parchment);
+  print-color-adjust:exact; -webkit-print-color-adjust:exact;
+}
+
+/* Layer 3: gold top bar */
+.card-top-bar {
+  position:absolute; top:0; left:0; right:0; height:5px;
+  background:var(--gold);
+  print-color-adjust:exact; -webkit-print-color-adjust:exact;
+}
+
+/* Decorative circles */
+.deco-right {
+  position:absolute; top:15px; right:-10px;
+  width:110px; height:110px; border-radius:50%;
+  background:var(--deco-right);
+  print-color-adjust:exact; -webkit-print-color-adjust:exact;
+}
+.deco-left {
+  position:absolute; top:25px; left:-5px;
+  width:90px; height:90px; border-radius:50%;
+  background:var(--deco-left);
+  print-color-adjust:exact; -webkit-print-color-adjust:exact;
+}
+
+/* GF badge — right circle centre at x=734, y=70 from top */
+.gf-badge {
+  position:absolute;
+  top:61px; left:692px;
+  width:84px; height:18px;
+  background:var(--sage);
+  border-radius:9px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:7px; font-weight:700; letter-spacing:.1em;
+  color:white; text-transform:uppercase; z-index:5;
+  print-color-adjust:exact; -webkit-print-color-adjust:exact;
+}
+
+/* Title */
+.card-title {
+  position:absolute; top:30px; left:48px; z-index:4;
+}
+.title-line1 {
+  font-family:'Lora',serif; font-size:38px; font-weight:700;
+  color:var(--mocha); line-height:1;
+}
+.title-line2 {
+  font-family:'Lora',serif; font-size:44px; font-style:italic;
+  color:var(--terracotta); line-height:1; margin-top:2px;
+}
+
+/* Ornament lines */
+.ornament {
+  display:flex; align-items:center; margin:0 48px;
+}
+.ornament-line { flex:1; height:1px; }
+.diamond { width:7px; height:7px; transform:rotate(45deg); margin:0 5px; flex-shrink:0; }
+.gold-line .ornament-line { background:var(--gold); }
+.gold-line .diamond { background:var(--gold); }
+.light-line .ornament-line { background:var(--light-line); }
+.light-line .diamond { background:var(--light-line); }
+
+.orn-gold  { position:absolute; top:150px; left:0; right:0; }
+.orn-light { position:absolute; top:175px; left:0; right:0; }
+
+.card-subtitle {
+  position:absolute; top:155px; left:0; right:0;
+  text-align:center; font-size:8px; font-weight:300;
+  color:var(--warm-brown); padding:3px 48px;
+}
+
+/* ── BODY ───────────────────────────────────────────── */
+.card-body {
+  position:absolute;
+  top:192px; left:48px; right:48px; bottom:134px;
+  display:grid; grid-template-columns:1fr 1fr; gap:16px;
+  overflow:hidden;
+}
+
+.pill {
+  display:inline-block; font-size:6.5px; font-weight:700;
+  letter-spacing:.1em; text-transform:uppercase; color:white;
+  padding:3px 9px; border-radius:20px; margin-bottom:7px;
+  print-color-adjust:exact; -webkit-print-color-adjust:exact;
+}
+.pill-terracotta { background:var(--terracotta); }
+.pill-mocha      { background:var(--mocha); }
+.pill-warm-brown { background:var(--warm-brown); }
+
+.col-divider {
+  height:1px; background:var(--light-line); margin:6px 0;
+  position:relative; display:flex; align-items:center; justify-content:center;
+}
+.col-divider::before {
+  content:'◆'; font-size:5px; color:var(--light-line);
+  background:var(--cream); padding:0 3px;
+}
+
+.sub-head {
+  font-size:7px; font-weight:700; color:var(--terracotta);
+  letter-spacing:.08em; text-transform:uppercase; margin:5px 0 2px 13px;
+}
+
+.ing-row {
+  display:flex; align-items:baseline; gap:3px;
+  margin-bottom:1.5px; padding-left:13px; position:relative; line-height:1.3;
+}
+.ing-row::before {
+  content:''; position:absolute; left:4px; top:5px;
+  width:4px; height:4px; border-radius:50%;
+}
+.dot-terracotta::before { background:var(--terracotta); }
+.dot-gold::before       { background:var(--gold); }
+.dot-sage::before       { background:var(--sage); }
+.ing-qty  { font-weight:700; color:var(--mocha); font-size:7.8px; white-space:nowrap; flex-shrink:0; }
+.ing-name { color:var(--dark-text); font-size:7.8px; }
+
+.ut-row {
+  display:flex; align-items:baseline; gap:3px;
+  margin-bottom:1.5px; padding-left:13px; position:relative;
+}
+.ut-row::before {
+  content:''; position:absolute; left:4px; top:5px;
+  width:4px; height:4px; border-radius:50%; background:var(--sage);
+}
+.ut-name { font-size:7.8px; color:var(--dark-text); }
+
+.alt-box {
+  background:var(--alt-bg); border:1px solid var(--gold);
+  border-radius:5px; padding:5px 8px; margin-top:5px;
+  font-size:6.5px; line-height:1.5;
+  print-color-adjust:exact; -webkit-print-color-adjust:exact;
+}
+.alt-label { font-weight:700; color:var(--mocha); }
+.alt-val   { font-weight:300; color:var(--warm-brown); }
+
+.step-row {
+  display:flex; gap:7px; align-items:flex-start;
+  margin-bottom:3.5px; padding-bottom:3.5px;
+  border-bottom:.5px solid var(--light-line);
+}
+.step-row:last-child { border-bottom:none; margin-bottom:0; }
+.step-num {
+  width:17px; height:17px; border-radius:50%; color:white;
+  font-size:7.5px; font-weight:700; display:flex; align-items:center;
+  justify-content:center; flex-shrink:0; margin-top:1px;
+  print-color-adjust:exact; -webkit-print-color-adjust:exact;
+}
+.num-even { background:var(--mocha); }
+.num-odd  { background:var(--terracotta); }
+.step-body { flex:1; overflow:hidden; }
+.step-title { font-size:7px; font-weight:700; color:var(--mocha); text-transform:uppercase; letter-spacing:.05em; margin-bottom:1px; }
+.step-text  { font-size:7px; color:var(--dark-text); line-height:1.4; }
+
+/* ── STORAGE + FOOTER ───────────────────────────────── */
+.card-footer-gold {
+  position:absolute; bottom:62px; left:0; right:0; height:1.5px;
+  background:var(--gold);
+  print-color-adjust:exact; -webkit-print-color-adjust:exact;
+}
+.card-footer-band {
+  position:absolute; bottom:0; left:0; right:0; height:62px;
+  background:var(--parchment);
+  print-color-adjust:exact; -webkit-print-color-adjust:exact;
+}
+
+/* Storage banner sits between body bottom (134px from bottom) and footer (62px from bottom) */
+.storage-banner {
+  position:absolute; bottom:68px; left:48px; right:48px; height:58px;
+  background:var(--parchment); border:1px solid var(--gold); border-radius:6px;
+  padding:5px 14px 4px;
+  display:flex; flex-direction:column; gap:3px;
+  print-color-adjust:exact; -webkit-print-color-adjust:exact;
+}
+.storage-pill {
+  display:inline-block; font-size:6px; font-weight:700;
+  letter-spacing:.1em; text-transform:uppercase; color:white;
+  padding:2px 8px; border-radius:20px; background:var(--mocha); line-height:1.5;
+  print-color-adjust:exact; -webkit-print-color-adjust:exact;
+}
+.storage-row {
+  display:flex; align-items:baseline; width:100%;
+}
+.s-left  { flex:0 0 auto; }
+.s-mid   { flex:1; text-align:center; }
+.s-right { flex:0 0 auto; }
+.s-label { font-weight:700; color:var(--terracotta); font-size:7.5px; }
+.s-val   { color:var(--dark-text); font-size:7.5px; }
+.storage-note { font-size:7px; font-weight:300; color:var(--warm-brown); text-align:center; }
+
+.footer-quote {
+  position:absolute; bottom:34px; left:0; right:0;
+  text-align:center; font-family:'Lora',serif; font-style:italic;
+  font-size:8.5px; color:var(--warm-brown);
+}
+.footer-orn  { position:absolute; bottom:23px; left:0; right:0; }
+.footer-meta {
+  position:absolute; bottom:8px; left:0; right:0;
+  text-align:center; font-size:6.5px; font-weight:300; color:#A08070;
+}
+
+/* ── PRINT ──────────────────────────────────────────── */
+@media print {
+  @page { size:A4 portrait; margin:0; }
+
+  * {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  html, body {
+    width: 210mm;
+    height: 297mm;
+    overflow: hidden;
+    background: white !important;
+  }
+
+  .app-header, .editor-panel { display:none !important; }
+
+  .workspace {
+    display: block;
+    height: 297mm;
+    width: 210mm;
+    overflow: hidden;
+  }
+
+  .preview-panel {
+    display: block;
+    padding: 0;
+    margin: 0;
+    width: 210mm;
+    height: 297mm;
+    background: transparent !important;
+    overflow: hidden;
+  }
+
+  .card {
+    width: 210mm;
+    height: 297mm;
+    box-shadow: none;
+    overflow: hidden;
+    page-break-after: avoid;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width:5px; }
+::-webkit-scrollbar-track { background:#1a1210; }
+::-webkit-scrollbar-thumb { background:#4a3020; border-radius:3px; }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div>
+    <h1>Recipe Card Studio</h1>
+    <div class="tagline">Edit on the left · Preview updates live · Print to PDF</div>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-outline" onclick="loadDefault()">Reset</button>
+    <button class="btn btn-gold" onclick="window.print()">🖨 Print to PDF</button>
+  </div>
+</header>
+
+<div class="workspace">
+
+<!-- ── EDITOR ───────────────────────────────────────── -->
+<div class="editor-panel">
+  <div>
+    <div class="section-label">Title & Header</div>
+    <div class="editor-card">
+      <label>Title Line 1</label>
+      <input type="text" id="title1" oninput="render()">
+      <label>Title Line 2 (italic)</label>
+      <input type="text" id="title2" oninput="render()">
+      <label>Subtitle</label>
+      <input type="text" id="subtitle" oninput="render()">
+    </div>
+  </div>
+  <div>
+    <div class="section-label">Utensils</div>
+    <div class="editor-card">
+      <div class="list-editor" id="ed-utensils"></div>
+      <button class="btn-add" onclick="addRow('utensils',['name'],['Utensil'])">+ Add utensil</button>
+    </div>
+  </div>
+  <div>
+    <div class="section-label">Ingredients — Wet</div>
+    <div class="editor-card">
+      <div class="list-editor" id="ed-wet"></div>
+      <button class="btn-add" onclick="addRow('wet',['qty','name'],['Qty','Ingredient'])">+ Add</button>
+    </div>
+  </div>
+  <div>
+    <div class="section-label">Ingredients — Dry</div>
+    <div class="editor-card">
+      <div class="list-editor" id="ed-dry"></div>
+      <button class="btn-add" onclick="addRow('dry',['qty','name'],['Qty','Ingredient'])">+ Add</button>
+    </div>
+  </div>
+  <div>
+    <div class="section-label">Mix-ins & Topping</div>
+    <div class="editor-card">
+      <div class="list-editor" id="ed-mixins"></div>
+      <button class="btn-add" onclick="addRow('mixins',['qty','name'],['Qty','Ingredient'])">+ Add</button>
+    </div>
+  </div>
+  <div>
+    <div class="section-label">Topping Alternatives</div>
+    <div class="editor-card">
+      <div class="list-editor" id="ed-alts"></div>
+      <button class="btn-add" onclick="addRow('alts',['name'],['Alternative'])">+ Add</button>
+    </div>
+  </div>
+  <div>
+    <div class="section-label">Method Steps</div>
+    <div class="editor-card">
+      <div class="list-editor" id="ed-steps"></div>
+      <button class="btn-add" onclick="addRow('steps',['title','text'],['Title','Description'])">+ Add step</button>
+    </div>
+  </div>
+  <div>
+    <div class="section-label">Storage</div>
+    <div class="editor-card">
+      <label>Room Temp</label><input type="text" id="storageRoom" oninput="render()">
+      <label>Fridge</label><input type="text" id="storageFridge" oninput="render()">
+      <label>Freezer</label><input type="text" id="storageFreezer" oninput="render()">
+      <label>Storage note</label><input type="text" id="storageNote" oninput="render()">
+    </div>
+  </div>
+  <div>
+    <div class="section-label">Footer</div>
+    <div class="editor-card">
+      <label>Quote</label><input type="text" id="footerQuote" oninput="render()">
+      <label>Meta (yields, times)</label><input type="text" id="footerMeta" oninput="render()">
+    </div>
+  </div>
+</div>
+
+<!-- ── PREVIEW ──────────────────────────────────────── -->
+<div class="preview-panel">
+<div class="card">
+
+  <div class="card-header-band"></div>
+  <div class="card-top-bar"></div>
+  <div class="deco-right"></div>
+  <div class="deco-left"></div>
+  <div class="gf-badge">Gluten Free</div>
+
+  <div class="card-title">
+    <div class="title-line1" id="pv-title1"></div>
+    <div class="title-line2" id="pv-title2"></div>
+  </div>
+
+  <div class="orn-gold">
+    <div class="ornament gold-line">
+      <div class="ornament-line"></div><div class="diamond"></div><div class="ornament-line"></div>
+    </div>
+  </div>
+
+  <div class="card-subtitle" id="pv-subtitle"></div>
+
+  <div class="orn-light">
+    <div class="ornament light-line">
+      <div class="ornament-line"></div><div class="diamond"></div><div class="ornament-line"></div>
+    </div>
+  </div>
+
+  <div class="card-body">
+    <!-- LEFT -->
+    <div style="overflow:hidden;">
+      <div><span class="pill pill-terracotta">You Will Need</span></div>
+      <div id="pv-utensils"></div>
+      <div class="col-divider"></div>
+      <div><span class="pill pill-mocha">Ingredients</span></div>
+      <div class="sub-head">Wet Ingredients</div>
+      <div id="pv-wet"></div>
+      <div class="sub-head">Dry Ingredients</div>
+      <div id="pv-dry"></div>
+      <div class="sub-head">Mix-ins &amp; Topping</div>
+      <div id="pv-mixins"></div>
+      <div class="alt-box" id="pv-alts"></div>
+    </div>
+    <!-- RIGHT -->
+    <div style="overflow:hidden;">
+      <div><span class="pill pill-warm-brown">Method</span></div>
+      <div id="pv-steps"></div>
+    </div>
+  </div>
+
+  <div class="storage-banner">
+    <div><span class="storage-pill">Storage &amp; Notes</span></div>
+    <div class="storage-row">
+      <div class="s-left" id="pv-s-room"></div>
+      <div class="s-mid"  id="pv-s-fridge"></div>
+      <div class="s-right" id="pv-s-freezer"></div>
+    </div>
+    <div class="storage-note" id="pv-s-note"></div>
+  </div>
+
+  <div class="card-footer-gold"></div>
+  <div class="card-footer-band"></div>
+  <div class="footer-quote" id="pv-footer-quote"></div>
+  <div class="footer-orn">
+    <div class="ornament gold-line">
+      <div class="ornament-line"></div><div class="diamond"></div><div class="ornament-line"></div>
+    </div>
+  </div>
+  <div class="footer-meta" id="pv-footer-meta"></div>
+
+</div>
+</div>
+</div>
+
+<script>
+let D = {};
+
+const DEFAULT = {
+  title1:"Char's Amazing", title2:"Brownies",
+  subtitle:"Rich, fudgy, deeply chocolatey — finished with sea salt flakes",
+  footerQuote:'"The secret ingredient is always love — and a pinch of sea salt."',
+  footerMeta:"Certified Gluten Free  ·  Makes approx. 24 squares  ·  Prep 15 min  ·  Bake 25–30 min",
+  utensils:[
+    {name:"Baking tray (8×12-inch / 20×30 cm)"},{name:"Large glass mixing bowl"},
+    {name:"Small glass bowl"},{name:"Measuring cups & spoons"},
+    {name:"Fine-mesh sieve"},{name:"Flexible spatula"},
+  ],
+  wet:[
+    {qty:"1 cup",name:"unsalted butter, melted & cooled"},{qty:"2 tbsp",name:"vegetable oil"},
+    {qty:"1¼ cups",name:"white caster sugar"},{qty:"¾ cup",name:"muscovado sugar"},
+    {qty:"4 large",name:"eggs, lightly whisked"},{qty:"1 tbsp",name:"pure vanilla extract"},
+  ],
+  dry:[
+    {qty:"¾ tsp",name:"fine sea salt"},{qty:"1 cup",name:"gluten-free flour"},
+    {qty:"1 cup",name:"Cadbury cocoa powder, sifted"},
+  ],
+  mixins:[
+    {qty:"200g",name:"Cadbury chocolate block, roughly chopped"},
+    {qty:"1 tsp",name:"sea salt flakes (add after baking)"},
+  ],
+  alts:[{name:"Crushed digestive biscuits"},{name:"Honeycomb pieces"},{name:"White chocolate chips"}],
+  steps:[
+    {title:"Prep",        text:"Preheat oven to 175°C (155°C fan / 350°F). Melt butter and set aside to cool to room temperature."},
+    {title:"Pan",         text:"Grease an 8×12-inch tin with cooking spray. Line with baking paper, leaving overhang on the long sides for easy removal."},
+    {title:"Combine wet", text:"In your large bowl, whisk together the cooled butter, oil, both sugars, eggs, and vanilla until pale and glossy — about 2 minutes. This aerates the batter beautifully."},
+    {title:"Add dry",     text:"Sieve the GF flour, Cadbury cocoa and salt directly into the wet mix. Fold gently with a spatula until just combined. Do not over-mix."},
+    {title:"Chocolate",   text:"Fold in ¾ of the chopped Cadbury chocolate. Pour batter into the prepared tin and smooth the top. Scatter remaining chocolate pieces over the surface."},
+    {title:"Bake",        text:"Bake 25–30 mins. Pull out when edges are set but the centre has a very slight wobble. A skewer should come out with moist crumbs, not wet batter."},
+    {title:"Sea salt",    text:"Remove from oven and immediately sprinkle sea salt flakes generously across the top. The heat helps them adhere without melting — you'll see and taste every flake."},
+    {title:"Cool",        text:"Allow to cool completely in the tin on a wire rack before lifting out and slicing."},
+  ],
+  storageRoom:"3 days — airtight container", storageFridge:"5 days — wrap tightly",
+  storageFreezer:"3 months",
+  storageNote:"Bring to room temperature before serving · Or warm gently in the microwave",
+};
+
+const LISTS = {
+  utensils:{fields:['name'],       ph:['Utensil'],           ed:'ed-utensils'},
+  wet:     {fields:['qty','name'], ph:['Qty','Ingredient'],  ed:'ed-wet'},
+  dry:     {fields:['qty','name'], ph:['Qty','Ingredient'],  ed:'ed-dry'},
+  mixins:  {fields:['qty','name'], ph:['Qty','Ingredient'],  ed:'ed-mixins'},
+  alts:    {fields:['name'],       ph:['Alternative'],       ed:'ed-alts'},
+  steps:   {fields:['title','text'],ph:['Title','Description'],ed:'ed-steps'},
+};
+
+const SIMPLE = ['title1','title2','subtitle','footerQuote','footerMeta',
+                'storageRoom','storageFridge','storageFreezer','storageNote'];
+
+function buildEditor(key) {
+  const {fields,ph,ed} = LISTS[key];
+  const container = document.getElementById(ed);
+  container.innerHTML = '';
+  D[key].forEach((item,i) => {
+    const row = document.createElement('div');
+    row.className = 'list-item-row';
+    fields.forEach((field,fi) => {
+      const isLong = field==='text' || (field==='name' && fields.length===1);
+      if (isLong) {
+        const ta = document.createElement('textarea');
+        ta.value = item[field]||''; ta.placeholder = ph[fi];
+        ta.style.cssText = 'flex:1;min-width:120px;min-height:32px;font-size:10px;';
+        ta.oninput = () => { D[key][i][field]=ta.value; render(); };
+        row.appendChild(ta);
+      } else {
+        const inp = document.createElement('input');
+        inp.type='text'; inp.value=item[field]||''; inp.placeholder=ph[fi];
+        inp.style.cssText = (field==='qty'||field==='title')
+          ? 'width:68px;flex-shrink:0;' : 'flex:1;min-width:90px;';
+        inp.oninput = () => { D[key][i][field]=inp.value; render(); };
+        row.appendChild(inp);
+      }
+    });
+    const rem = document.createElement('button');
+    rem.className='btn-remove'; rem.innerHTML='×';
+    rem.onclick = () => { D[key].splice(i,1); buildEditor(key); render(); };
+    row.appendChild(rem);
+    container.appendChild(row);
+  });
+}
+
+function addRow(key,fields,ph) {
+  const blank={}; fields.forEach(f=>blank[f]='');
+  D[key].push(blank); buildEditor(key); render();
+}
+
+function render() {
+  SIMPLE.forEach(id => { const el=document.getElementById(id); if(el) D[id]=el.value; });
+
+  setText('pv-title1', D.title1);
+  setText('pv-title2', D.title2);
+  setText('pv-subtitle', D.subtitle);
+  setText('pv-footer-quote', D.footerQuote);
+  setText('pv-footer-meta', D.footerMeta);
+
+  document.getElementById('pv-utensils').innerHTML =
+    D.utensils.map(u=>`<div class="ut-row"><span class="ut-name">${u.name}</span></div>`).join('');
+
+  document.getElementById('pv-wet').innerHTML =
+    D.wet.map(i=>`<div class="ing-row dot-terracotta"><span class="ing-qty">${i.qty}</span><span class="ing-name">${i.name}</span></div>`).join('');
+  document.getElementById('pv-dry').innerHTML =
+    D.dry.map(i=>`<div class="ing-row dot-terracotta"><span class="ing-qty">${i.qty}</span><span class="ing-name">${i.name}</span></div>`).join('');
+  document.getElementById('pv-mixins').innerHTML =
+    D.mixins.map(i=>`<div class="ing-row dot-gold"><span class="ing-qty">${i.qty}</span><span class="ing-name">${i.name}</span></div>`).join('');
+
+  document.getElementById('pv-alts').innerHTML =
+    `<span class="alt-label">Topping alternatives: </span><span class="alt-val">${D.alts.map(a=>a.name).join('  ·  ')}</span>`;
+
+  document.getElementById('pv-steps').innerHTML =
+    D.steps.map((s,i)=>`
+      <div class="step-row">
+        <div class="step-num ${i%2===0?'num-even':'num-odd'}">${i+1}</div>
+        <div class="step-body">
+          <div class="step-title">${s.title}</div>
+          <div class="step-text">${s.text}</div>
+        </div>
+      </div>`).join('');
+
+  document.getElementById('pv-s-room').innerHTML =
+    `<span class="s-label">Room temp: </span><span class="s-val">${D.storageRoom}</span>`;
+  document.getElementById('pv-s-fridge').innerHTML =
+    `<span class="s-label">Fridge: </span><span class="s-val">${D.storageFridge}</span>`;
+  document.getElementById('pv-s-freezer').innerHTML =
+    `<span class="s-label">Freezer: </span><span class="s-val">${D.storageFreezer}</span>`;
+  setText('pv-s-note', D.storageNote);
+}
+
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val||'';
+}
+
+function loadDefault() {
+  D = JSON.parse(JSON.stringify(DEFAULT));
+  SIMPLE.forEach(id => { const el=document.getElementById(id); if(el) el.value=D[id]||''; });
+  Object.keys(LISTS).forEach(k => buildEditor(k));
+  render();
+}
+
+loadDefault();
+</script>
+</body>
+</html>
